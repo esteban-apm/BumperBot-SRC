@@ -1,0 +1,113 @@
+/*
+Programacion de bumper
+*/
+//#include "AFMotor.h"
+bool derecha, izquierda, avanzar, detener;
+ //Motor derecho
+ //int ena = 0;
+ int pin1 = 2;
+ int pin2 = 3;
+ 
+ //Motor izquierda
+ //int enb = 0;
+ int pin3 = 4;
+ int pin4 = 5;
+
+//Sensor Ultrasónico derecho
+int trig1 = 6;
+int echo1 = 7;
+long tiempoUS1 = 0;
+float distancia1 = 0;
+//Sensor Ultrasónico izquierdp
+int trig2 = 8;
+int echo2 = 9 ;
+long tiempoUS2 = 0;
+float distancia2 = 0;
+
+void setup() 
+{
+  Serial.begin(9600);
+  pinMode(trig1, OUTPUT);
+  pinMode(echo1, INPUT);
+  pinMode(trig2, OUTPUT);
+  pinMode(echo2, INPUT);
+
+
+  pinMode(pin1, OUTPUT);
+  pinMode(pin2, OUTPUT);
+  pinMode(pin3, OUTPUT);
+  pinMode(pin4, OUTPUT);
+
+
+}
+
+void loop() 
+{
+  distanciaUS1();
+  secuenciaprueba();
+}
+
+void distanciaUS1()
+{
+  digitalWrite(trig1, LOW);
+  delayMicroseconds(5);
+  
+  digitalWrite(trig1, HIGH);
+  delayMicroseconds(10);
+  
+  tiempoUS1 = pulseIn(echo1, HIGH);
+  distancia1 = (tiempoUS1/2) / 29;
+  Serial.print("Distancia Ultrasónico1 derecha = "); Serial.print(distancia1);
+  delay(200);
+}
+
+void secuenciaprueba()
+{
+  avance();
+  girarderecha();
+  girarizq();
+  girarpropioeje();
+}
+void avance()
+{
+  Serial.print("Avanzar");
+  digitalWrite(pin1, 1);
+  digitalWrite(pin2, 0);
+  digitalWrite(pin3, 1);
+  digitalWrite(pin4, 0);
+  delay(2000);
+}
+void girarpropioeje()
+{
+  Serial.print("Girar derecha");
+  digitalWrite(pin1, 1);
+  digitalWrite(pin2, 0);
+  digitalWrite(pin3, 0);
+  digitalWrite(pin4, 1);
+  delay(2000);
+}
+void girarderecha()
+{
+  Serial.print("Girar derecha");
+  digitalWrite(pin1, 0);
+  digitalWrite(pin2, 0);
+  digitalWrite(pin3, 1);
+  digitalWrite(pin4, 0);
+  delay(2000);
+}
+void girarizq()
+{
+  Serial.print("Girar izquierda");
+  digitalWrite(pin1, 1);
+  digitalWrite(pin2, 0);
+  digitalWrite(pin3, 0);
+  digitalWrite(pin4, 0);
+  delay(2000);
+}
+/*
+void leerUltraSon1()
+{
+
+}
+*/
+
