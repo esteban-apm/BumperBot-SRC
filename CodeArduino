@@ -4,34 +4,39 @@ Programacion de bumper
 //#include "AFMotor.h"
 bool derecha, izquierda, avanzar, detener;
  //Motor derecho
- //int ena = 0;
- int pin1 = 2;
- int pin2 = 3;
+ int ena = 3;
+ int pin1 = 1;
+ int pin2 = 0;
  
  //Motor izquierda
- //int enb = 0;
- int pin3 = 4;
- int pin4 = 5;
+ int enb = 5;
+ int pin3 = 6;
+ int pin4 = 4;
 
+int distanciamax = 100;
+float distmin = 40;
 //Sensor Ultrasónico derecho
-int trig1 = 6;
-int echo1 = 7;
+int trig1 = 7;
+int echo1 = 8;
 long tiempoUS1 = 0;
 float distancia1 = 0;
 //Sensor Ultrasónico izquierdp
-int trig2 = 8;
-int echo2 = 9 ;
+int trig2 = 9;
+int echo2 = 10 ;
 long tiempoUS2 = 0;
 float distancia2 = 0;
 
 void setup() 
 {
   Serial.begin(9600);
+
+  pinMode(ena, OUTPUT);
+  pinMode(enb, OUTPUT);
+  
   pinMode(trig1, OUTPUT);
   pinMode(echo1, INPUT);
   pinMode(trig2, OUTPUT);
   pinMode(echo2, INPUT);
-
 
   pinMode(pin1, OUTPUT);
   pinMode(pin2, OUTPUT);
@@ -44,29 +49,91 @@ void setup()
 void loop() 
 {
   distanciaUS1();
+  distanciaUS2();
   secuenciaprueba();
+}
+
+void tacleo()
+{
+  //Aquí se va a meter primero la función del infrarrojo
+  if (distmin < distanciamax)
+  {
+    if ((distancia1 < (distmin-10) && distancia1 > (distmin+10)) || (distancia2 < (distmin-10) && distancia2 > (distmin+10)))
+    {
+      avance();
+    }
+    else
+    {
+      rastreo();
+      return distmin;
+
+    }
+  }
+}
+
+void rastreo()
+{
+  girarderecha();
+
+  if (distancia1 < distmin)
+  {
+    distmin = distancia1;
+  }
+  else if (distancia2 < distmin)
+  {
+    distmin = distancia2;
+  }
+  delay(200);
+
+
 }
 
 void distanciaUS1()
 {
   digitalWrite(trig1, LOW);
   delayMicroseconds(5);
-  
   digitalWrite(trig1, HIGH);
   delayMicroseconds(10);
   
   tiempoUS1 = pulseIn(echo1, HIGH);
-  distancia1 = (tiempoUS1/2) / 29;
+  distancia1 = (tiempoUS1/2) / 29.2;
   Serial.print("Distancia Ultrasónico1 derecha = "); Serial.print(distancia1);
+  delay(200);
+}
+void distanciaUS2()
+{
+  digitalWrite(trig2, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trig2, HIGH);
+  delayMicroseconds(10);
+  
+  tiempoUS2 = pulseIn(echo2, HIGH);
+  distancia2 = (tiempoUS2/2) / 29.2;
+  Serial.print("Distancia Ultrasónico1 derecha = "); Serial.print(distancia2);
   delay(200);
 }
 
 void secuenciaprueba()
 {
+  analogWrite(ena, 255);
+  analogWrite(enb, 255);
   avance();
+  delay(2000);
+
+  analogWrite(ena, 200);
+  analogWrite(enb, 200);
   girarderecha();
+  delay(2000);
+
+  analogWrite(ena, 100);
+  analogWrite(enb, 100);
   girarizq();
+  delay(2000);
+  
+  analogWrite(ena, 200);
+  analogWrite(enb, 200);
   girarpropioeje();
+  delay(2000);
 }
 void avance()
 {
@@ -75,16 +142,14 @@ void avance()
   digitalWrite(pin2, 0);
   digitalWrite(pin3, 1);
   digitalWrite(pin4, 0);
-  delay(2000);
 }
 void girarpropioeje()
 {
-  Serial.print("Girar derecha");
+  Serial.print("Girar sobre propio eje");
   digitalWrite(pin1, 1);
   digitalWrite(pin2, 0);
   digitalWrite(pin3, 0);
   digitalWrite(pin4, 1);
-  delay(2000);
 }
 void girarderecha()
 {
@@ -93,7 +158,6 @@ void girarderecha()
   digitalWrite(pin2, 0);
   digitalWrite(pin3, 1);
   digitalWrite(pin4, 0);
-  delay(2000);
 }
 void girarizq()
 {
@@ -102,7 +166,6 @@ void girarizq()
   digitalWrite(pin2, 0);
   digitalWrite(pin3, 0);
   digitalWrite(pin4, 0);
-  delay(2000);
 }
 /*
 void leerUltraSon1()
