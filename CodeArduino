@@ -2,16 +2,15 @@
 Programacion de bumper
 */
 //#include "AFMotor.h"
-bool derecha, izquierda, avanzar, detener;
  //Motor derecho
 #define ena 3
-#define pin1  1
-#define pin2  0
+#define pin1  2
+#define pin2  1
  
  //Motor izquierda
 #define enb 5
-#define pin3 6
-#define pin4 4
+#define pin3 4
+#define pin4 6
 
 int distanciamax = 100;
 float distmin = 40;
@@ -22,7 +21,7 @@ long tiempoUS1 = 0;
 float distancia1 = 0;
 //Sensor Ultrasónico izquierdp
 #define  trig2 9
-#define  echo2 10 
+#define  echo2 10
 long tiempoUS2 = 0;
 float distancia2 = 0;
 //Infrarrojos
@@ -32,15 +31,21 @@ bool white;
 #define infraDO A2
 int ir2 = 0;
 bool whiteclear;
-//#define infraDO2 A3
 
-void setup() 
+#define boton 12
+#define foco 13
+bool encendido;
+float tiempo = 0;
+float tiempoinicio = 0;
+float tiempoparo = 0;
+
+void setup()
 {
   Serial.begin(9600);
 
   pinMode(ena, OUTPUT);
   pinMode(enb, OUTPUT);
-  
+ 
   pinMode(trig1, OUTPUT);
   pinMode(echo1, INPUT);
   pinMode(trig2, OUTPUT);
@@ -52,26 +57,92 @@ void setup()
   pinMode(pin4, OUTPUT);
 
   pinMode(infraAO, INPUT);
+  pinMode(infraDO, INPUT);
 
+  pinMode(boton, INPUT);
+  pinMode(foco, OUTPUT);
+
+  while(true)
+  {
+    encendido = digitalRead(boton);
+    Serial.print("apagado");
+    if (encendido == false)
+    {
+      tiempoinicio = millis();
+      Serial.print("encendido");
+     
+      break;
+    }
+  }
+  digitalWrite(foco, 1);
+}
+
+void loop()
+{
+  encendido = digitalRead(boton);
+  Serial.print(encendido);
+  analogWrite(ena, 200);
+  analogWrite(enb, 200);
+  tiempo = millis();
+
+  secuenciabase();
+
+  if ((tiempo - tiempoinicio) > 5000)
+  {
+    if (encendido == false)
+    {
+      detener();
+    }
+  }
 
 }
 
-void loop() 
+void secuenciabase()
 {
-  distanciaUS1();
-  distanciaUS2();
-  secuenciaprueba();
+  float distancia = distanciaUS1();
+  float distancia2 = distanciaUS2();
+  float distmedia = (distancia+distancia2)/2;
+
+  irsensor1();
+  irsensor2();
+ 
+  if (whiteclear == true && white == true)
+  {
+    if (distancia < distanciamax || distancia2 < distanciamax)
+    {
+      avance();
+      delay(500);
+    }
+    else
+    {
+      stop();
+      girarpropioeje();
+      delay(400);
+    }
+  }
+  else
+  {
+    backwards();
+    delay(400);
+  }
+
+  Serial.println(distmedia);
+
 }
 
 void tacleo()
 {
-  if (whiteclear == true)
+  float distancia = distanciaUS1();
+  float distancia2 = distanciaUS2();
+ 
+  if (whiteclear == true && white == true)
   {
     if (distmin < distanciamax)
     {
       if ((distancia1 < (distmin-10) && distancia1 > (distmin+10)) || (distancia2 < (distmin-10) && distancia2 > (distmin+10)))
       {
         avance();
+        delay(500);
       }
       else
       {
@@ -104,29 +175,29 @@ void rastreo()
 
 }
 
-void distanciaUS1()
+float distanciaUS1()
 {
   digitalWrite(trig1, LOW);
-  delayMicroseconds(5);
+  delayMicroseconds(2);
   digitalWrite(trig1, HIGH);
   delayMicroseconds(10);
-  
+  digitalWrite(trig1, LOW);
+ 
   tiempoUS1 = pulseIn(echo1, HIGH);
   distancia1 = (tiempoUS1/2) / 29.2;
-  Serial.print("Distancia Ultrasónico1 derecha = "); Serial.print(distancia1);
-  delay(100);
+  return distancia1;
 }
-void distanciaUS2()
+float distanciaUS2()
 {
   digitalWrite(trig2, LOW);
-  delayMicroseconds(5);
+  delayMicroseconds(2);
   digitalWrite(trig2, HIGH);
   delayMicroseconds(10);
-  
+  digitalWrite(trig2, LOW);
+ 
   tiempoUS2 = pulseIn(echo2, HIGH);
   distancia2 = (tiempoUS2/2) / 29.2;
-  Serial.print("Distancia Ultrasónico1 derecha = "); Serial.print(distancia2);
-  delay(100);
+  return distancia2;
 }
 
 void secuenciaprueba()
@@ -145,7 +216,7 @@ void secuenciaprueba()
   analogWrite(enb, 100);
   girarizq();
   delay(2000);
-  
+ 
   analogWrite(ena, 200);
   analogWrite(enb, 200);
   girarpropioeje();
@@ -154,42 +225,51 @@ void secuenciaprueba()
 void avance()
 {
   Serial.print("Avanzar");
-  digitalWrite(pin1, 1);
-  digitalWrite(pin2, 0);
-  digitalWrite(pin3, 1);
-  digitalWrite(pin4, 0);
+  digitalWrite(pin1, HIGH);
+  digitalWrite(pin2, LOW);
+  digitalWrite(pin3, HIGH);
+  digitalWrite(pin4, LOW);
 }
 void backwards()
 {
-  Serial.print("Avanzar");
-  digitalWrite(pin1, 0);
-  digitalWrite(pin2, 1);
-  digitalWrite(pin3, 0);
-  digitalWrite(pin4, 1);
+  Serial.print("Reversa");
+  digitalWrite(pin1, LOW);
+  digitalWrite(pin2, HIGH);
+  digitalWrite(pin3, LOW);
+  digitalWrite(pin4, HIGH);
+}
+void stop()
+{
+    Serial.print("stop ");
+    digitalWrite(pin1, LOW);
+    digitalWrite(pin2, LOW);
+    digitalWrite(pin3, LOW);
+    digitalWrite(pin4, LOW);
+    delay(200);
 }
 void girarpropioeje()
 {
   Serial.print("Girar sobre propio eje");
-  digitalWrite(pin1, 1);
-  digitalWrite(pin2, 0);
-  digitalWrite(pin3, 0);
-  digitalWrite(pin4, 1);
+  digitalWrite(pin1, HIGH);
+  digitalWrite(pin2, LOW);
+  digitalWrite(pin3, LOW);
+  digitalWrite(pin4, HIGH);
 }
 void girarderecha()
 {
   Serial.print("Girar derecha");
-  digitalWrite(pin1, 0);
-  digitalWrite(pin2, 0);
-  digitalWrite(pin3, 1);
-  digitalWrite(pin4, 0);
+  digitalWrite(pin1, HIGH);
+  digitalWrite(pin2, LOW);
+  digitalWrite(pin3, LOW);
+  digitalWrite(pin4, LOW);
 }
 void girarizq()
 {
   Serial.print("Girar izquierda");
-  digitalWrite(pin1, 1);
-  digitalWrite(pin2, 0);
-  digitalWrite(pin3, 0);
-  digitalWrite(pin4, 0);
+  digitalWrite(pin1, HIGH);
+  digitalWrite(pin2, LOW);
+  digitalWrite(pin3, LOW);
+  digitalWrite(pin4, LOW);
 }
 
 void irsensor1()
@@ -198,28 +278,44 @@ void irsensor1()
   if (ir1 < 500)
   {
     white = true;
-    Serial.print("Es blanco");
+    Serial.print("Blanco-");
   }
   else
   {
     white = false;
-    Serial.print("No es blanco");
+    Serial.print("Negro-");
   }
-  delay(200);
 }
 void irsensor2()
 {
   ir2 = digitalRead(infraDO);
-  if (ir1 == 0)
+  if (ir2 == 0)
   {
     whiteclear = true;
-    Serial.print("Whiteclear = true");
+    Serial.print("Blanco2 ");
   }
   else
   {
     whiteclear = false;
-    Serial.print("Whiteclear = false");
+    Serial.print("Negro2 ");
   }
-  delay(200);
 }
 
+void detener()
+{
+  tiempoparo = millis();
+  while (true)
+  {
+    tiempo = millis();
+    digitalWrite(foco, 0);
+    Serial.println(tiempoparo);
+    Serial.println(tiempo);
+  delay(1000);
+    if ((tiempo - tiempoparo) > 5000)
+    {
+      break;
+    }
+  }
+  digitalWrite(foco, 1);
+  tiempoinicio = millis();
+}
