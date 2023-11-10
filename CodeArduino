@@ -306,16 +306,21 @@ void detener()
   tiempoparo = millis();
   while (true)
   {
-    tiempo = millis();
+    prender = digitalRead(boton);
+  	tiempo = millis();
     digitalWrite(foco, 0);
     Serial.println(tiempoparo);
     Serial.println(tiempo);
   delay(1000);
     if ((tiempo - tiempoparo) > 5000)
     {
-      break;
+      if (prender == false)
+      {
+        break;
+      }
     }
   }
   digitalWrite(foco, 1);
   tiempoinicio = millis();
+  
 }
